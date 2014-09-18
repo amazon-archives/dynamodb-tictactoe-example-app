@@ -111,11 +111,13 @@ def index():
         return redirect('/index')
 
     inviteGames = controller.getGameInvites(session["username"])
-    inviteGames = [Game(inviteGame) for inviteGame in inviteGames]
     if inviteGames == None:
         flash("Table has not been created yet, please follow this link to create table.")
         return render_template("table.html",
                                 user="")
+    
+    # Don't attempt to iterate over inviteGames until AFTER None test
+    inviteGames = [Game(inviteGame) for inviteGame in inviteGames]
 
     inProgressGames = controller.getGamesWithStatus(session["username"], "IN_PROGRESS")
     inProgressGames = [Game(inProgressGame) for inProgressGame in inProgressGames]
