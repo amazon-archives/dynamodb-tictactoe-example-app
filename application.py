@@ -36,9 +36,11 @@ parser.add_argument('--mode', help='Whether to connect to a DynamoDB service end
                     'is required. In service mode, AWS credentials and endpoint information must be provided either on the command-line or through the config file.',
                     choices=['local', 'service'], default='service')
 parser.add_argument('--endpoint', help='An endpoint to connect to (the host name - without the http/https and without the port). ' \
-                    'When using DynamoDB Local, defaults to localhost')
+                    'When using DynamoDB Local, defaults to localhost. If the USE_EC2_INSTANCE_METADATA environment variable is set, reads the instance ' \
+                    'region using the EC2 instance metadata service, and contacts DynamoDB in that region.')
 parser.add_argument('--port', help='The port of DynamoDB Local endpoint to connect to.  Defaults to 8000', type=int)
-parser.add_argument('--serverPort', help='The port for this Flask web server to listen on.  Defaults to 5000 or whatever is in the config file', type=int)
+parser.add_argument('--serverPort', help='The port for this Flask web server to listen on.  Defaults to 5000 or whatever is in the config file. If the SERVER_PORT ' \
+                    'environment variable is set, uses that instead.', type=int)
 args = parser.parse_args()
 
 configFile = args.config
@@ -51,7 +53,12 @@ if configFile is not None:
     config = ConfigParser()
     config.read(configFile)
 
-cm = ConnectionManager(mode=args.mode, config=config, endpoint=args.endpoint, port=args.port)
+# Read environment variable for whether to read config from EC2 instance metadata
+use_instance_metadata = ""
+if 'USE_EC2_INSTANCE_METADATA' in os.environ:
+    use_instance_metadata = os.environ['USE_EC2_INSTANCE_METADATA']
+
+cm = ConnectionManager(mode=args.mode, config=config, endpoint=args.endpoint, port=args.port, use_instance_metadata=use_instance_metadata)
 controller = GameController(cm)
 
 serverPort = args.serverPort
@@ -61,6 +68,11 @@ if config is not None:
     if serverPort is None:
         if config.has_option('flask', 'serverPort'):
             serverPort = config.get('flask', 'serverPort')
+
+# Default to environment variables for server port - easier for elastic beanstalk configuration
+if 'SERVER_PORT' in os.environ:
+    serverPort = int(os.environ['SERVER_PORT'])
+
 if serverPort is None:
     serverPort = 5000
 
@@ -115,7 +127,6 @@ def index():
         flash("Table has not been created yet, please follow this link to create table.")
         return render_template("table.html",
                                 user="")
-    
     # Don't attempt to iterate over inviteGames until AFTER None test
     inviteGames = [Game(inviteGame) for inviteGame in inviteGames]
 

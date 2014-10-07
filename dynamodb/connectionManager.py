@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from setupDynamoDB          import getDynamoDBConnection, createGamesTable
+from setupDynamoDB          import getDynamoDBConnection, createGamesTable 
 from boto.dynamodb2.table   import Table
 from uuid                   import uuid4
 
 class ConnectionManager:
 
-    def __init__(self, mode=None, config=None, endpoint=None, port=None):
+    def __init__(self, mode=None, config=None, endpoint=None, port=None, use_instance_metadata=False):
         self.db = None
         self.gamesTable = None
         
@@ -30,7 +30,7 @@ class ConnectionManager:
                 port = 8000
             self.db = getDynamoDBConnection(endpoint=endpoint, port=port, local=True)
         elif mode == "service":
-            self.db = getDynamoDBConnection(config=config, endpoint=endpoint)
+            self.db = getDynamoDBConnection(config=config, endpoint=endpoint, use_instance_metadata=use_instance_metadata)
         else:
             raise Exception("Invalid arguments, please refer to usage.");
 
