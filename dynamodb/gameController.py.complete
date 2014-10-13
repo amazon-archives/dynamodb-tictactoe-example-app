@@ -157,37 +157,61 @@ class GameController:
     
     def updateBoardAndTurn(self, item, position, current_player):
         """
-        Requirements for this function:
-          - Make only one API call to DynamoDB
-          - The "Turn" attribute should be updated to current_player
-          - The position attribute should be updated to an "X" or an "O", depending on 
-            whose turn it is.
-          - The move is allowed only if the "StatusDate" attribute is still
-            "IN_PROGRESS_" (keeping in mind that this attribute also stores
-            the date that game was started)
-          - The move is allowed only if the "Turn" attribute value is the same as the 
-            current_player
-          - The move is allowed only if the position attribute is not already defined.
-          - Return true if the update was successful, or false if the move was not allowed.
-            This should NOT throw an exception if the move was not allowed.
-        Hints:
-          - Most of the code in this example uses the mid-level API, but this function
-            will be easier to implement using the Low Level API.
+        Using the Low Level API, we execute a conditional write on the Item.
+        We are able to specify the particular item by passing in the keys param, in 
+        this case it's just a GameId.
+        In expectations, we expect
+            the StatusDate to be IN_PROGRESS_<date of the game>,
+            the Turn to be the player who is currently logged in,
+            the "Space" to not exist as an attribute because it hasn't been written to yet.
+        If this succeeds we update the Turn to the next player, as well.
+        Returns True/False depending on the success of the these operations.                 
         """
         player_one = item["HostId"]
         player_two = item["OpponentId"]
         gameId     = item["GameId"]
         statusDate = item["StatusDate"]
         date = statusDate.split("_")[1]
-
-        # representation is either an "X" or "O" depending on whose turn it is.	
+    
         representation = "X"
         if item["OUser"] == current_player:
             representation = "O"
 
-        # FIXME construct an API call to DynamoDB as per the requirements listed above.
+        if current_player == player_one:
+            next_player = player_two
+        else:
+            next_player = player_one
+    
+        key = {
+                "GameId" : { "S" : gameId }
+            }
+    
+        attributeUpdates = {
+                        position : {
+                            "Action" : "PUT",
+                            "Value"  : { "S" : representation }
+                            },
+                        "Turn" : {
+                            "Action" : "PUT",
+                            "Value" : { "S" : next_player }
+                            }
+                        }
 
-        return false
+
+        expectations = {"StatusDate" : {"AttributeValueList": [{"S" : "IN_PROGRESS_"}],
+                                        "ComparisonOperator": "BEGINS_WITH"},
+                        "Turn"       : {"Value" : {"S" : current_player}},
+                        position     : {"Exists" : False}}
+    
+        # LOW LEVEL API
+        try:
+            self.cm.db.update_item("Games", key=key, 
+                        attribute_updates=attributeUpdates,
+                        expected=expectations)
+        except ConditionalCheckFailedException, ccfe:
+            return False
+
+        return True
 
 
     def getBoardState(self, item):
