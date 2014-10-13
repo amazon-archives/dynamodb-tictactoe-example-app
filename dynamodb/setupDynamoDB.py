@@ -65,10 +65,18 @@ def getDynamoDBConnection(config=None, endpoint=None, port=None, local=False, us
 def createGamesTable(db):
 
     try:
-        hostStatusDate = GlobalAllIndex("hostStatusDate", parts=[HashKey("HostId"),
-                                                                RangeKey("StatusDate")])
-        opponentStatusDate  = GlobalAllIndex("opponentStatusDate", parts=[HashKey("OpponentId"),
-                                                                RangeKey("StatusDate")]) 
+        hostStatusDate = GlobalAllIndex("HostId-StatusDate-index",
+                                        parts=[HashKey("HostId"), RangeKey("StatusDate")],
+                                        throughput={
+                                            'read': 1,
+                                            'write': 1
+                                        })
+        opponentStatusDate  = GlobalAllIndex("OpponentId-StatusDate-index",
+                                        parts=[HashKey("OpponentId"), RangeKey("StatusDate")],
+                                        throughput={
+                                            'read': 1,
+                                            'write': 1
+                                        })
 
         #global secondary indexes
         GSI = [hostStatusDate, opponentStatusDate]
@@ -76,8 +84,8 @@ def createGamesTable(db):
         gamesTable = Table.create("Games",
                     schema=[HashKey("GameId")],
                     throughput={
-                        'read':1,
-                        'write':1
+                        'read': 1,
+                        'write': 1
                     },
                     global_indexes=GSI,
                     connection=db)

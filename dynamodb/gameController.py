@@ -44,7 +44,7 @@ class GameController:
                             "HostId"     : creator,
                             "StatusDate" : statusDate,
                             "OUser"      : creator,
-                            "Turn"       : creator,
+                            "Turn"       : invitee,
                             "OpponentId" : invitee
                         })
         
@@ -124,7 +124,7 @@ class GameController:
     
     def getGameInvites(self,user):
         """
-        Performs a query on the index "opponentStatusDate" in order to get the
+        Performs a query on the "OpponentId-StatusDate-index" in order to get the
         10 most recent games you were invited to.
         Returns a list of Game objects.
         """
@@ -134,7 +134,7 @@ class GameController:
     
         gameInvitesIndex = self.cm.getGamesTable().query(OpponentId__eq=user,
                                             StatusDate__beginswith="PENDING_",
-                                            index="opponentStatusDate",
+                                            index="OpponentId-StatusDate-index",
                                             limit=10)
         
     
@@ -176,6 +176,11 @@ class GameController:
         representation = "X"
         if item["OUser"] == current_player:
             representation = "O"
+
+        if current_player == player_one:
+            next_player = player_two
+        else:
+            next_player = player_one
     
         key = {
                 "GameId" : { "S" : gameId }
@@ -185,9 +190,14 @@ class GameController:
                         position : {
                             "Action" : "PUT",
                             "Value"  : { "S" : representation }
+                            },
+                        "Turn" : {
+                            "Action" : "PUT",
+                            "Value" : { "S" : next_player }
                             }
                         }
-    
+
+
         expectations = {"StatusDate" : {"AttributeValueList": [{"S" : "IN_PROGRESS_"}],
                                         "ComparisonOperator": "BEGINS_WITH"},
                         "Turn"       : {"Value" : {"S" : current_player}},
@@ -200,16 +210,10 @@ class GameController:
                         expected=expectations)
         except ConditionalCheckFailedException, ccfe:
             return False
-        
-        if item["HostId"] == item["Turn"]:
-            new_player = item["OpponentId"]
-        else:
-            new_player = item["HostId"]
-    
-        item["Turn"] = new_player
-    
-        return item.partial_save()
-    
+
+        return True
+
+
     def getBoardState(self, item):
         """
         Puts the state of the board into a list, putting a blank space for
@@ -359,12 +363,12 @@ class GameController:
     
         hostGamesInProgress = self.cm.getGamesTable().query(HostId__eq=user,
                                             StatusDate__beginswith=status,
-                                            index="hostStatusDate",
+                                            index="HostId-StatusDate-index",
                                             limit=10)
     
         oppGamesInProgress = self.cm.getGamesTable().query(OpponentId__eq=user,
                                             StatusDate__beginswith=status,
-                                            index="opponentStatusDate",
+                                            index="OpponentId-StatusDate-index",
                                             limit=10)
     
         games = self.mergeQueries(hostGamesInProgress,
