@@ -336,4 +336,4 @@ def selectSquare(gameId):
 
 if __name__ == "__main__":
     if cm:
-        application.run(debug = True, port=serverPort)
+        application.run(debug = True, port=serverPort, host='0.0.0.0')

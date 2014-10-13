@@ -34,7 +34,7 @@ class Game:
     def getStatus(self):
         status = self.statusDate[0]
         if len(self.statusDate) > 2:
-            status += self.statusDate[1]
+            status += "_" + self.statusDate[1]
         return status
     status = property(getStatus)
 
