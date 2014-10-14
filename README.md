@@ -1,6 +1,6 @@
 # Tic Tac Toe on DynamoDB
 
-TicTacToe is a lightweight application that runs on Python and depends on two packages, Flask(0.9) and Boto(2.27).  If you want in depth information about the application and DynamoDB check out [Tic Tac Toe on DynamoDB](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ExampleApps.html).
+TicTacToe is a lightweight application that runs on Python and depends on two packages, Flask(0.9) and Boto(2.27).  If you want in depth information about the application and DynamoDB check out [Tic Tac Toe on DynamoDB](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TicTacToe.html).
 
 Below are instructions that will help you launch the application.
 These instructions will also require you to have access to a terminal.
