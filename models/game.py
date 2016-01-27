@@ -21,7 +21,7 @@ class Game:
     GameId is the primary key.
     HostId-StatusDate, Opponent-StatusDate are Global Secondary Indexes that are Hash-Range Keys.
     The other attributes are used to maintain game state.
-    """    
+    """
     def __init__(self, item):
         self.item = item
         self.gameId       = item["GameId"]
@@ -52,7 +52,7 @@ class Game:
         return cmp(self.statusDate[1], otherGame.statusDate[1])
 
     def getOpposingPlayer(self, current_player):
-        if current_player == self.hostId: 
+        if current_player == self.hostId:
             return self.opponent
         else:
             return self.hostId

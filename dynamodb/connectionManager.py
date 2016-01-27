@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from setupDynamoDB          import getDynamoDBConnection, createGamesTable 
+from .setupDynamoDB          import getDynamoDBConnection, createGamesTable
 from boto.dynamodb2.table   import Table
 from uuid                   import uuid4
 
@@ -20,7 +20,7 @@ class ConnectionManager:
     def __init__(self, mode=None, config=None, endpoint=None, port=None, use_instance_metadata=False):
         self.db = None
         self.gamesTable = None
-        
+
         if mode == "local":
             if config is not None:
                 raise Exception('Cannot specify config when in local mode')
@@ -39,8 +39,8 @@ class ConnectionManager:
     def setupGamesTable(self):
         try:
             self.gamesTable = Table("Games", connection=self.db)
-        except Exception, e:
-            raise e, "There was an issue trying to retrieve the Games table."
+        except Exception as e:
+            raise e("There was an issue trying to retrieve the Games table.")
 
     def getGamesTable(self):
         if self.gamesTable == None:

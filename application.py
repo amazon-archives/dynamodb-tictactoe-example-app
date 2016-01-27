@@ -17,13 +17,13 @@ from dynamodb.gameController        import GameController
 from models.game                    import Game
 from uuid                           import uuid4
 from flask                          import Flask, render_template, request, session, flash, redirect, jsonify, json
-from ConfigParser                   import ConfigParser
+from configparser                   import ConfigParser
 import os, time, sys, argparse
 
 application = Flask(__name__)
 application.debug = True
 application.secret_key = str(uuid4())
-        
+
 """
    Configure the application according to the command line args and config files
 """
@@ -77,12 +77,12 @@ if serverPort is None:
     serverPort = 5000
 
 """
-   Define the urls and actions the app responds to   
+   Define the urls and actions the app responds to
 """
 
 @application.route('/logout')
 def logout():
-    """ 
+    """
     Method associated to the route '/logout' that sets the logged in
     user of the session to None.
     """
@@ -91,7 +91,7 @@ def logout():
 
 @application.route('/table', methods=["GET", "POST"])
 def createTable():
-    cm.createGamesTable() 
+    cm.createGamesTable()
 
     while controller.checkIfTableIsActive() == False:
         time.sleep(3)
@@ -118,7 +118,7 @@ def index():
                 session["username"] = None
         else:
             session["username"] = None
-    
+
     if request.method == "POST":
         return redirect('/index')
 
@@ -133,14 +133,14 @@ def index():
     inProgressGames = controller.getGamesWithStatus(session["username"], "IN_PROGRESS")
     inProgressGames = [Game(inProgressGame) for inProgressGame in inProgressGames]
 
-    finishedGames   = controller.getGamesWithStatus(session["username"], "FINISHED") 
+    finishedGames   = controller.getGamesWithStatus(session["username"], "FINISHED")
     fs = [Game(finishedGame) for finishedGame in finishedGames]
 
-    return render_template("index.html", 
+    return render_template("index.html",
             user=session["username"],
             invites=inviteGames,
             inprogress=inProgressGames,
-            finished=fs) 
+            finished=fs)
 
 @application.route('/create')
 def create():
@@ -157,8 +157,8 @@ def create():
 @application.route('/play', methods=["POST"])
 def play():
     """
-    This method receives the post request from the form on the 
-    '/create' page. 
+    This method receives the post request from the form on the
+    '/create' page.
 
     Basic validation for the name of the player invited.
 
@@ -185,23 +185,23 @@ def play():
 def game(gameId):
     """
     Method associated the with the '/game=<gameId>' route where the
-    gameId is in the URL.  
-    
+    gameId is in the URL.
+
     Validates that the gameId actually exists.
 
     Checks to see if the game has been finished.
-    
+
     Gets the state of the board and updates the visual representation
     accordingly.
-    
+
     Displays a bit of extra information like turn, status, and gameId.
     """
     if session.get("username", None) == None:
         flash("Need to login")
         return redirect("/index")
-    
+
     item = controller.getGame(gameId)
-    if item == None: 
+    if item == None:
         flash("That game does not exist.")
         return redirect("/index")
 
@@ -215,7 +215,7 @@ def game(gameId):
 
     game = Game(item)
     status   = game.status
-    turn     = game.turn 
+    turn     = game.turn
 
     if game.getResult(session["username"]) == None:
         if (turn == game.o):
@@ -247,8 +247,8 @@ def game(gameId):
 def gameData(gameId):
     """
     Method associated the with the '/gameData=<gameId>' route where the
-    gameId is in the URL.  
-    
+    gameId is in the URL.
+
     Validates that the gameId actually exists.
 
     Returns a JSON representation of the game to support AJAX to poll to see
@@ -274,8 +274,8 @@ def accept(invite):
     Updates the game status to IN_PROGRESS and proceeds to the game's page.
     """
     gameId = request.form["response"]
-    game = controller.getGame(gameId) 
-    
+    game = controller.getGame(gameId)
+
     if game == None:
         flash("That game does not exist anymore.")
         redirect("/index")
@@ -296,7 +296,7 @@ def reject(invite):
     """
     gameId = request.form["response"]
     game = controller.getGame(gameId)
-    
+
     if game == None:
         flash("That game doesn't exist anymore.")
         redirect("/index")
@@ -305,7 +305,7 @@ def reject(invite):
         flash("Something went wrong when deleting invite.")
         redirect("/index")
 
-    return redirect("/index") 
+    return redirect("/index")
 
 @application.route('/select=<gameId>', methods=["POST"])
 def selectSquare(gameId):

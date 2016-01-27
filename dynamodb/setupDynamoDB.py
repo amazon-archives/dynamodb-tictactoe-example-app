@@ -19,15 +19,19 @@ from boto.dynamodb2.fields  import RangeKey
 from boto.dynamodb2.layer1  import DynamoDBConnection
 from boto.dynamodb2.table   import Table
 
-import urllib2, json
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+import json
 
 def getDynamoDBConnection(config=None, endpoint=None, port=None, local=False, use_instance_metadata=False):
     if local:
         db = DynamoDBConnection(
             host=endpoint,
             port=port,
-            aws_secret_access_key='ticTacToeSampleApp', 
-            aws_access_key_id='ticTacToeSampleApp',   
+            aws_secret_access_key='ticTacToeSampleApp',
+            aws_access_key_id='ticTacToeSampleApp',
             is_secure=False)
     else:
         params = {
@@ -53,7 +57,7 @@ def getDynamoDBConnection(config=None, endpoint=None, port=None, local=False, us
 
         # Only auto-detect the DynamoDB endpoint if the endpoint was not specified through other config
         if 'host' not in params and use_instance_metadata:
-            response = urllib2.urlopen('http://169.254.169.254/latest/dynamic/instance-identity/document').read()
+            response = urlopen('http://169.254.169.254/latest/dynamic/instance-identity/document').read()
             doc = json.loads(response);
             params['host'] = 'dynamodb.%s.amazonaws.com' % (doc['region'])
             if 'region' in params:
@@ -90,13 +94,13 @@ def createGamesTable(db):
                     global_indexes=GSI,
                     connection=db)
 
-    except JSONResponseError, jre:
+    except JSONResponseError as jre:
         try:
             gamesTable = Table("Games", connection=db)
-        except Exception, e:
-            print "Games Table doesn't exist."
+        except Exception as e:
+            print("Games Table doesn't exist.")
     finally:
-        return gamesTable 
+        return gamesTable
 
 #parse command line args for credentials and such
 #for now just assume local is when args are empty
